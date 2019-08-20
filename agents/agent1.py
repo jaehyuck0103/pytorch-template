@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from datasets.dataset1 import Dataset1
 from nets.net1 import Net1
-from utils.misc import AverageMeter, EarlyStopping
+from utils.metrics import AverageMeter, EarlyStopping
 
 
 class Agent1():
