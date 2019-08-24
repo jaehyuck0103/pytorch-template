@@ -124,10 +124,10 @@ class Agent1():
             # Metrics
             y_pred_t = torch.sigmoid(y_pred) > 0.5
             y_gt_t = y_gt > 0.5
-            acc = (y_pred_t == y_gt_t).sum().item() / batch_size
+            cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
 
             epoch_loss.update(cur_loss.item(), batch_size)
-            epoch_acc.update(acc, batch_size)
+            epoch_acc.update(cur_acc, batch_size)
 
         tqdm_batch.close()
 
@@ -157,9 +157,9 @@ class Agent1():
                 # Metrics
                 y_pred_t = torch.sigmoid(y_pred) > 0.5
                 y_gt_t = y_gt > 0.5
-                acc = (y_pred_t == y_gt_t).sum().item() / batch_size
+                cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
 
-                epoch_acc.update(acc, batch_size)
+                epoch_acc.update(cur_acc, batch_size)
         tqdm_batch.close()
 
         logging.info(f'Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val}')
