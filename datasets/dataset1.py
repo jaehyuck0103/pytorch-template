@@ -19,6 +19,7 @@ TEST_IMG_DIR = os.path.join(ROOT_DIR, 'data/test_images')
 
 def _imread_img(f):
     img = cv2.imread(f).astype(np.float32) / 255
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # img = cv2.imread(f, cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255
 
     return img
