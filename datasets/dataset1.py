@@ -12,12 +12,12 @@ from torch.utils.data import Dataset
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '../')
 ROOT_DIR = os.path.abspath(ROOT_DIR)
 
-TRAIN_IMG_DIR = os.path.join(ROOT_DIR, 'data/train_images')
-TRAIN_CSV_PATH = os.path.join(ROOT_DIR, 'data/train.csv')
-TEST_IMG_DIR = os.path.join(ROOT_DIR, 'data/test_images')
+TRAIN_IMG_DIR = os.path.join(ROOT_DIR, 'Data/train_images')
+TRAIN_CSV_PATH = os.path.join(ROOT_DIR, 'Data/train.csv')
+TEST_IMG_DIR = os.path.join(ROOT_DIR, 'Data/test_images')
 
 
-def _imread_img(f):
+def _imread_float(f):
     img = cv2.imread(f).astype(np.float32) / 255
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # img = cv2.imread(f, cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255
@@ -31,11 +31,12 @@ class Dataset1(Dataset):
 
         self.mode = mode
 
-        df = pd.read_csv(TRAIN_CSV_PATH)
+        df = pd.read_csv(TRAIN_CSV_PATH, names=['basename', 'label'],
+                         dtype={'basename': str, 'label': int})
 
         num_imgs = df.shape[0]
         kf = StratifiedKFold(n_splits=S.KFOLD_N, shuffle=True, random_state=910103)
-        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df['gt']))[S.KFOLD_I]
+        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df['label']))[S.KFOLD_I]
 
         self.df = df
         if mode == 'train':
@@ -45,16 +46,17 @@ class Dataset1(Dataset):
         else:
             raise ValueError(f'Unknown Mode {mode}')
 
-    def __getitem__(self, idx):
+    def __getitem__(self, _idx):
 
-        idx = self.idx_map[idx]
+        idx = self.idx_map[_idx]
 
-        img_file_path = os.path.join(TRAIN_IMG_DIR, self.df['img_path'].iloc[idx])
-        img = _imread_img(img_file_path)
+        basename = self.df['basename'].iloc[idx]
+        label = self.df['label'].iloc[idx]
+
+        img_path = os.path.join(TRAIN_IMG_DIR, f'{basename}.jpg')
+        img = _imread_float(img_path)
 
         img = cv2.resize(img, (224, 224))
-
-        gt = self.df['gt']
 
         if self.mode == 'train':
             # some augmentation
@@ -73,8 +75,8 @@ class Dataset1(Dataset):
         img[2] = (img[2] - 0.406) / 0.225
 
         # sample return
-        gt = np.expand_dims(gt, axis=0)
-        sample = {'img': img, 'gt': gt}
+        # label = np.expand_dims(label, axis=0)
+        sample = {'img': img, 'label': label}
 
         return sample
 

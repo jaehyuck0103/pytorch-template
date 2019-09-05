@@ -15,30 +15,37 @@ from utils.metrics import AverageMeter, EarlyStopping
 
 
 class Agent1():
-    def __init__(self):
+    def __init__(self, predict_only=False):
         # device configuration
         self.device = torch.device('cuda')
-
-        # Dataset Setting
-        train_dataset = Dataset1(mode='train')
-        self.train_loader = DataLoader(
-            dataset=train_dataset, batch_size=S.TRAIN_BATCH_SIZE,
-            shuffle=True, num_workers=8, drop_last=True, pin_memory=True,
-            worker_init_fn=lambda _: np.random.seed(torch.initial_seed() % 2**32)
-        )
-
-        valid_dataset = Dataset1(mode='valid')
-        self.valid_loader = DataLoader(
-            dataset=valid_dataset, batch_size=S.VALID_BATCH_SIZE,
-            shuffle=False, num_workers=8,
-            worker_init_fn=lambda _: np.random.seed(torch.initial_seed() % 2**32)
-        )
 
         # Network
         if S.NET == 'NET1':
             self.net = Net1().to(self.device)
         else:
             raise ValueError(f'Unexpected Network {S.NET}')
+
+        if predict_only:
+            return
+
+        # Dataset Setting
+        if S.DATASET == 'DATASET1':
+            train_dataset = Dataset1(mode='train')
+            valid_dataset = Dataset1(mode='valid')
+        else:
+            raise ValueError(f'Unexpected Dataset {S.DATASET}')
+
+        self.train_loader = DataLoader(
+            dataset=train_dataset, batch_size=S.TRAIN_BATCH_SIZE,
+            shuffle=True, num_workers=8, drop_last=True, pin_memory=True,
+            worker_init_fn=lambda _: np.random.seed(torch.initial_seed() % 2**32)
+        )
+
+        self.valid_loader = DataLoader(
+            dataset=valid_dataset, batch_size=S.VALID_BATCH_SIZE,
+            shuffle=False, num_workers=8,
+            worker_init_fn=lambda _: np.random.seed(torch.initial_seed() % 2**32)
+        )
 
         # Optimizer
         if S.OPTIMIZER == 'SGD':
@@ -84,10 +91,10 @@ class Agent1():
     def train(self):
         for epoch in range(S.NUM_EPOCHS):
             self.current_epoch = epoch
-            self.train_one_epoch()
+            self._train_epoch()
 
-            if (epoch + 1) % S.VALIDATION_INTERVAL == 0:
-                validate_acc = self.validate()
+            if (epoch + 1) % S.VALIDATION_INTERVAL == 0 or (epoch + 1) > S.FULL_VALIDATION_POINT:
+                validate_acc = self._validate_epoch()
 
                 self.scheduler.step(validate_acc)
                 if self.early_stopper.step(validate_acc):
@@ -95,7 +102,7 @@ class Agent1():
 
         self.save_checkpoint()
 
-    def train_one_epoch(self):
+    def _train_epoch(self):
         # Training mode
         self.net.train()
 
@@ -107,14 +114,14 @@ class Agent1():
         for data in tqdm_batch:
             # Prepare data
             x_img = data['img'].to(self.device, torch.float)  # (batch, 3, H, W)
-            y_gt = data['gt'].to(self.device, torch.float)  # (batch, 1)
+            y_gt = data['label'].to(self.device, torch.int64)  # (batch)
             batch_size = x_img.shape[0]
 
             # Forward pass
-            y_pred = self.net(x_img)
+            y_pred = self.net(x_img)  # (batch, n_class)
 
             # Compute loss
-            cur_loss = F.binary_cross_entropy_with_logits(y_pred, y_gt)
+            cur_loss = F.cross_entropy(y_pred, y_gt)
 
             # Backprop and optimize
             self.optimizer.zero_grad()
@@ -122,9 +129,13 @@ class Agent1():
             self.optimizer.step()
 
             # Metrics
+            _, pred_idx = torch.max(y_pred, 1)
+            cur_acc = (pred_idx == y_gt).sum().item() / batch_size
+            '''  # binary cross entropy 일 때의 예시.
             y_pred_t = torch.sigmoid(y_pred) > 0.5
             y_gt_t = y_gt > 0.5
             cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
+            '''
 
             epoch_loss.update(cur_loss.item(), batch_size)
             epoch_acc.update(cur_acc, batch_size)
@@ -136,7 +147,7 @@ class Agent1():
 
         return epoch_acc.val
 
-    def validate(self):
+    def _validate_epoch(self):
         # Eval mode
         self.net.eval()
 
@@ -148,20 +159,34 @@ class Agent1():
             for data in tqdm_batch:
                 # Prepare data
                 x_img = data['img'].to(self.device, torch.float)  # (batch, 3, H, W)
-                y_gt = data['gt'].to(self.device, torch.float)  # (batch, 1)
+                y_gt = data['label'].to(self.device, torch.int64)  # (batch, 1)
                 batch_size = x_img.shape[0]
 
                 # Forward pass
                 y_pred = self.net(x_img)
 
                 # Metrics
+                _, pred_idx = torch.max(y_pred, 1)
+                cur_acc = (pred_idx == y_gt).sum().item() / batch_size
+                '''  # binary cross entropy 일 때의 예시.
                 y_pred_t = torch.sigmoid(y_pred) > 0.5
                 y_gt_t = y_gt > 0.5
                 cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
-
+                '''
                 epoch_acc.update(cur_acc, batch_size)
         tqdm_batch.close()
 
         logging.info(f'Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val}')
 
         return epoch_acc.val
+
+    def predict(self, x_img):
+        self.net.eval()
+
+        with torch.no_grad():
+            x_img = x_img.to(self.device, torch.float)
+
+            # Forward pass
+            y_pred = self.net(x_img)
+
+        return y_pred.cpu().numpy()
