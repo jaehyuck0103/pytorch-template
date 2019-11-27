@@ -143,7 +143,7 @@ class Agent1():
         tqdm_batch.close()
 
         logging.info(f'Train at epoch- {self.current_epoch} |'
-                     f'loss: {epoch_loss.val} - acc: {epoch_acc.val}')
+                     f'loss: {epoch_loss.val:.4f} - acc: {epoch_acc.val:.4f}')
 
         return epoch_acc.val
 
@@ -176,7 +176,7 @@ class Agent1():
                 epoch_acc.update(cur_acc, batch_size)
         tqdm_batch.close()
 
-        logging.info(f'Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val}')
+        logging.info(f'Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val:.4f}')
 
         return epoch_acc.val
 
