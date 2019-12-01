@@ -23,13 +23,14 @@ if __name__ == '__main__':
 
     parser.add_argument('CONFIG_NAME', type=str)
     parser.add_argument('LR', type=float)
+    parser.add_argument('--NO_LOG', action='store_true')
 
     args = parser.parse_args()
 
     # --------------------
     # Setting Root Logger
     # --------------------
-    begin_time = init_logger()
+    begin_time = init_logger(no_file_logging=args.NO_LOG)
 
     # --------------------------
     # Load and update settings
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     S['LR'] = args.LR
     S['CHECKPOINT_DIR'] = os.path.join(ROOT_DIR, f'Output/{begin_time}')
 
-    logging.info(S.as_dict())   # summarize settings
+    logging.info(S.as_dict())  # summarize settings
 
     # -------
     # Run

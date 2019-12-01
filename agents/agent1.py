@@ -63,6 +63,9 @@ class Agent1():
 
         self.early_stopper = EarlyStopping(mode='max', patience=S.EARLY_STOP, verbose=True)
 
+        # ETC
+        self.current_epoch = None
+
     def save_checkpoint(self):
 
         state = {
@@ -93,7 +96,7 @@ class Agent1():
             self.current_epoch = epoch
             self._train_epoch()
 
-            if (epoch + 1) % S.VALIDATION_INTERVAL == 0 or (epoch + 1) > S.FULL_VALIDATION_POINT:
+            if (epoch + 1) % S.VALIDATION_INTERVAL == 0:
                 validate_acc = self._validate_epoch()
 
                 self.scheduler.step(validate_acc)
