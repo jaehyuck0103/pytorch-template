@@ -15,15 +15,15 @@ def main():
     agent.train()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # ------------
     # Argparse
     # ------------
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('CONFIG_NAME', type=str)
-    parser.add_argument('LR', type=float)
-    parser.add_argument('--NO_LOG', action='store_true')
+    parser.add_argument("CONFIG_NAME", type=str)
+    parser.add_argument("LR", type=float)
+    parser.add_argument("--NO_LOG", action="store_true")
 
     args = parser.parse_args()
 
@@ -35,9 +35,9 @@ if __name__ == '__main__':
     # --------------------------
     # Load and update settings
     # --------------------------
-    S.load_file(path=f'{args.CONFIG_NAME}.toml')
-    S['LR'] = args.LR
-    S['CHECKPOINT_DIR'] = os.path.join(ROOT_DIR, f'Output/{begin_time}')
+    S.load_file(path=f"{args.CONFIG_NAME}.toml")
+    S["LR"] = args.LR
+    S["CHECKPOINT_DIR"] = os.path.join(ROOT_DIR, f"Output/{begin_time}")
 
     logging.info(S.as_dict())  # summarize settings
 

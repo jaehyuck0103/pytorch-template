@@ -2,6 +2,7 @@ class AverageMeter:
     """
     Class to be an average meter for any average metric like loss, accuracy, etc..
     """
+
     def __init__(self):
         self.avg = 0
         self.sum = 0
@@ -54,22 +55,22 @@ class AverageMeterList:
         return self.avg
 
 
-class EarlyStopping():
+class EarlyStopping:
     def __init__(self, mode, patience, verbose=False):
         self.step_i = 0
         self.patience = patience
         self.mode = mode
         self.verbose = verbose
 
-        if self.mode == 'max':
-            self.best_score = -float('inf')
-        elif self.mode == 'min':
-            self.best_score = float('inf')
+        if self.mode == "max":
+            self.best_score = -float("inf")
+        elif self.mode == "min":
+            self.best_score = float("inf")
         else:
-            raise ValueError(f'Unknown {mode}')
+            raise ValueError(f"Unknown {mode}")
 
     def step(self, new_score):
-        if self.mode == 'max':
+        if self.mode == "max":
             is_best = new_score > self.best_score
         else:
             is_best = new_score < self.best_score
@@ -81,7 +82,7 @@ class EarlyStopping():
             self.step_i += 1
 
         if self.verbose:
-            print(f'EarlyStopping {self.step_i}/{self.patience}')
+            print(f"EarlyStopping {self.step_i}/{self.patience}")
 
         if self.step_i > self.patience:
             return True

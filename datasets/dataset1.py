@@ -9,12 +9,12 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import Dataset
 
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), '../')
+ROOT_DIR = os.path.join(os.path.dirname(__file__), "../")
 ROOT_DIR = os.path.abspath(ROOT_DIR)
 
-TRAIN_IMG_DIR = os.path.join(ROOT_DIR, 'Data/train_images')
-TRAIN_CSV_PATH = os.path.join(ROOT_DIR, 'Data/train.csv')
-TEST_IMG_DIR = os.path.join(ROOT_DIR, 'Data/test_images')
+TRAIN_IMG_DIR = os.path.join(ROOT_DIR, "Data/train_images")
+TRAIN_CSV_PATH = os.path.join(ROOT_DIR, "Data/train.csv")
+TEST_IMG_DIR = os.path.join(ROOT_DIR, "Data/test_images")
 
 
 def _imread_float(f):
@@ -31,34 +31,35 @@ class Dataset1(Dataset):
 
         self.mode = mode
 
-        df = pd.read_csv(TRAIN_CSV_PATH, names=['basename', 'label'],
-                         dtype={'basename': str, 'label': int})
+        df = pd.read_csv(
+            TRAIN_CSV_PATH, names=["basename", "label"], dtype={"basename": str, "label": int}
+        )
 
         num_imgs = df.shape[0]
         kf = StratifiedKFold(n_splits=S.KFOLD_N, shuffle=True, random_state=910103)
-        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df['label']))[S.KFOLD_I]
+        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df["label"]))[S.KFOLD_I]
 
         self.df = df
-        if mode == 'train':
+        if mode == "train":
             self.idx_map = train_idx
-        elif mode == 'valid':
+        elif mode == "valid":
             self.idx_map = valid_idx
         else:
-            raise ValueError(f'Unknown Mode {mode}')
+            raise ValueError(f"Unknown Mode {mode}")
 
     def __getitem__(self, _idx):
 
         idx = self.idx_map[_idx]
 
-        basename = self.df['basename'].iloc[idx]
-        label = self.df['label'].iloc[idx]
+        basename = self.df["basename"].iloc[idx]
+        label = self.df["label"].iloc[idx]
 
-        img_path = os.path.join(TRAIN_IMG_DIR, f'{basename}.jpg')
+        img_path = os.path.join(TRAIN_IMG_DIR, f"{basename}.jpg")
         img = _imread_float(img_path)
 
         img = cv2.resize(img, (224, 224))
 
-        if self.mode == 'train':
+        if self.mode == "train":
             # some augmentation
             pass
         else:
@@ -76,7 +77,7 @@ class Dataset1(Dataset):
 
         # sample return
         # label = np.expand_dims(label, axis=0)
-        sample = {'img': img, 'label': label}
+        sample = {"img": img, "label": label}
 
         return sample
 
