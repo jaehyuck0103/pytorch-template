@@ -104,6 +104,10 @@ class Agent1:
         logging.info(f'Checkpoint loaded successfully at (epoch {checkpoint["epoch"]})')
 
     def train(self):
+        self.current_epoch = 0
+        self.save_checkpoint()  # Operation Check
+        self._validate_epoch()  # Operation Check
+
         for epoch in range(S.NUM_EPOCHS):
             self.current_epoch = epoch
             self._train_epoch()
@@ -164,6 +168,7 @@ class Agent1:
 
         return epoch_acc.val
 
+    @torch.no_grad()
     def _validate_epoch(self):
         # Eval mode
         self.net.eval()
@@ -172,38 +177,37 @@ class Agent1:
         epoch_acc = AverageMeter()
 
         tqdm_batch = tqdm(self.valid_loader, f"Epoch-{self.current_epoch}-")
-        with torch.no_grad():
-            for data in tqdm_batch:
-                # Prepare data
-                x_img = data["img"].to(self.device, torch.float)  # (batch, 3, H, W)
-                y_gt = data["label"].to(self.device, torch.int64)  # (batch, 1)
-                batch_size = x_img.shape[0]
+        for data in tqdm_batch:
+            # Prepare data
+            x_img = data["img"].to(self.device, torch.float)  # (batch, 3, H, W)
+            y_gt = data["label"].to(self.device, torch.int64)  # (batch, 1)
+            batch_size = x_img.shape[0]
 
-                # Forward pass
-                y_pred = self.net(x_img)
+            # Forward pass
+            y_pred = self.net(x_img)
 
-                # Metrics
-                _, pred_idx = torch.max(y_pred, 1)
-                cur_acc = (pred_idx == y_gt).sum().item() / batch_size
-                """  # binary cross entropy 일 때의 예시.
-                y_pred_t = torch.sigmoid(y_pred) > 0.5
-                y_gt_t = y_gt > 0.5
-                cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
-                """
-                epoch_acc.update(cur_acc, batch_size)
+            # Metrics
+            _, pred_idx = torch.max(y_pred, 1)
+            cur_acc = (pred_idx == y_gt).sum().item() / batch_size
+            """  # binary cross entropy 일 때의 예시.
+            y_pred_t = torch.sigmoid(y_pred) > 0.5
+            y_gt_t = y_gt > 0.5
+            cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
+            """
+            epoch_acc.update(cur_acc, batch_size)
         tqdm_batch.close()
 
         logging.info(f"Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val:.4f}")
 
         return epoch_acc.val
 
+    @torch.no_grad()
     def predict(self, x_img):
         self.net.eval()
 
-        with torch.no_grad():
-            x_img = x_img.to(self.device, torch.float)
+        x_img = x_img.to(self.device, torch.float)
 
-            # Forward pass
-            y_pred = self.net(x_img)
+        # Forward pass
+        y_pred = self.net(x_img)
 
         return y_pred.cpu().numpy()
