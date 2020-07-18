@@ -1,16 +1,17 @@
-from dynaconf import settings as S
-import os
-import logging
 import argparse
-from utils.logger import init_logger
+import logging
+import os
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from agents.agent1 import Agent1
-from datasets.dataset1 import Dataset1
-import numpy as np
 from tqdm import tqdm
 
+from agents.agent1 import Agent1
+from config import merge_config_from_toml
+from config import settings as S
+from datasets.dataset1 import Dataset1
+from utils.logger import init_logger
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -30,8 +31,8 @@ def main():
     agent.load_checkpoint()
 
     # start prediction
-    tqdm_batch = tqdm(test_loader, f"Test")
-    for idx, data in enumerate(tqdm_batch):
+    tqdm_batch = tqdm(test_loader, "Test")
+    for _, data in enumerate(tqdm_batch):
         # Prepare data
         x_img = data["img"]
 
@@ -60,10 +61,10 @@ if __name__ == "__main__":
     # --------------------------
     # Load and update settings
     # --------------------------
-    S.load_file(path=f"{args.CONFIG_NAME}.toml")
-    S["CHECKPOINT_DIR"] = os.path.join(ROOT_DIR, f"Output/{args.VER_TO_LOAD}")
+    merge_config_from_toml(f"./config/{args.CONFIG_NAME}.toml")
+    S.CHECKPOINT_DIR = os.path.join(ROOT_DIR, f"Output/{args.VER_TO_LOAD}")
 
-    logging.info(S.as_dict())  # summarize settings
+    logging.info(S)  # summarize settings
 
     # -------
     # Run

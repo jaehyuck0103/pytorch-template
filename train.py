@@ -1,11 +1,11 @@
-import os
-import logging
 import argparse
-from dynaconf import settings as S
+import logging
+import os
 
 from agents.agent1 import Agent1
+from config import merge_config_from_toml
+from config import settings as S
 from utils.logger import init_logger
-
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -35,11 +35,11 @@ if __name__ == "__main__":
     # --------------------------
     # Load and update settings
     # --------------------------
-    S.load_file(path=f"{args.CONFIG_NAME}.toml")
-    S["LR"] = args.LR
-    S["CHECKPOINT_DIR"] = os.path.join(ROOT_DIR, f"Output/{begin_time}")
+    merge_config_from_toml(f"./config/{args.CONFIG_NAME}.toml")
+    S.LR = args.LR
+    S.CHECKPOINT_DIR = os.path.join(ROOT_DIR, f"Output/{begin_time}")
 
-    logging.info(S.as_dict())  # summarize settings
+    logging.info(S)  # summarize settings
 
     # -------
     # Run

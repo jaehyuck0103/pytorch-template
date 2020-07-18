@@ -1,13 +1,12 @@
-from dynaconf import settings as S
-
 import os
-import numpy as np
-import pandas as pd
-import cv2
-from sklearn.model_selection import StratifiedKFold
 
+import cv2
+import numpy as np
 from torch.utils.data import Dataset
 
+import pandas as pd
+from config import settings as S
+from sklearn.model_selection import StratifiedKFold
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), "../")
 ROOT_DIR = os.path.abspath(ROOT_DIR)

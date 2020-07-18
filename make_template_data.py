@@ -1,6 +1,6 @@
-from torchvision import datasets
 import os
 
+from torchvision import datasets
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(ROOT_DIR)

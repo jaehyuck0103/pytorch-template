@@ -1,14 +1,13 @@
-from dynaconf import settings as S
-
-import os
 import logging
+import os
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import torch
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
-
+from config import settings as S
 from datasets.dataset1 import Dataset1
 from nets.net1 import Net1
 from utils.metrics import AverageMeter, EarlyStopping
@@ -85,8 +84,8 @@ class Agent1:
             "state_dict": self.net.state_dict(),
         }
 
-        filename = f"KFOLD_{S.KFOLD_I}.ckpt"
-        logging.info("Saving checkpoint '{}'".format(filename))
+        filename = f"KFOLD_{S.KFOLD_I}.pth"
+        logging.info(f"Saving checkpoint '{filename}'")
         os.makedirs(S.CHECKPOINT_DIR, exist_ok=True)
         torch.save(state, os.path.join(S.CHECKPOINT_DIR, filename))
 
@@ -94,8 +93,8 @@ class Agent1:
 
     def load_checkpoint(self):
 
-        filename = f"KFOLD_{S.KFOLD_I}.ckpt"
-        logging.info("Loading checkpoint '{}'".format(filename))
+        filename = f"KFOLD_{S.KFOLD_I}.pth"
+        logging.info(f"Loading checkpoint '{filename}'")
         checkpoint = torch.load(os.path.join(S.CHECKPOINT_DIR, filename))
 
         self.current_epoch = checkpoint["epoch"] + 1

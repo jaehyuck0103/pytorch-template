@@ -84,7 +84,4 @@ class EarlyStopping:
         if self.verbose:
             print(f"EarlyStopping {self.step_i}/{self.patience}")
 
-        if self.step_i > self.patience:
-            return True
-        else:
-            return False
+        return self.step_i > self.patience

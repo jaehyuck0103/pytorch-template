@@ -1,5 +1,3 @@
-[default]
-
 NET = "NET1"
 
 DATASET = "DATASET1"
