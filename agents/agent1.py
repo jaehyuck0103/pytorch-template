@@ -1,16 +1,17 @@
 import logging
 import os
+import time
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from config import settings as S
 from datasets.dataset1 import Dataset1
 from nets.net1 import Net1
 from utils.metrics import AverageMeter, EarlyStopping
+from utils.utils import StaticPrinter
 
 
 class Agent1:
@@ -75,43 +76,45 @@ class Agent1:
         self.early_stopper = EarlyStopping(mode="max", patience=S.EARLY_STOP, verbose=True)
 
         # ETC
-        self.current_epoch = None
+        self.epoch = 0
 
     def save_checkpoint(self):
 
         state = {
-            "epoch": self.current_epoch,
+            "epoch": self.epoch,
             "state_dict": self.net.state_dict(),
         }
 
-        filename = f"KFOLD_{S.KFOLD_I}.pth"
+        filename = f"KFOLD_{S.KFOLD_I}.pt"
         logging.info(f"Saving checkpoint '{filename}'")
         os.makedirs(S.CHECKPOINT_DIR, exist_ok=True)
         torch.save(state, os.path.join(S.CHECKPOINT_DIR, filename))
 
-        logging.info(f"Checkpoint saved successfully at (epoch {self.current_epoch})")
+        logging.info(f"Checkpoint saved successfully at (epoch {self.epoch})")
 
     def load_checkpoint(self):
 
-        filename = f"KFOLD_{S.KFOLD_I}.pth"
+        filename = f"KFOLD_{S.KFOLD_I}.pt"
         logging.info(f"Loading checkpoint '{filename}'")
         checkpoint = torch.load(os.path.join(S.CHECKPOINT_DIR, filename))
 
-        self.current_epoch = checkpoint["epoch"] + 1
+        self.epoch = checkpoint["epoch"]
         self.net.load_state_dict(checkpoint["state_dict"])
 
         logging.info(f'Checkpoint loaded successfully at (epoch {checkpoint["epoch"]})')
 
     def train(self):
-        self.current_epoch = 0
-        self.save_checkpoint()  # Operation Check
-        self._validate_epoch()  # Operation Check
+        if self.epoch == 0:
+            self.save_checkpoint()  # Operation Check
+            self._validate_epoch()  # Operation Check
 
-        for epoch in range(S.NUM_EPOCHS):
-            self.current_epoch = epoch
+        start_epoch = self.epoch + 1
+        for self.epoch in range(start_epoch, S.NUM_EPOCHS):
+            train_epoch_start = time.time()
             self._train_epoch()
+            print("Train Epoch Duration: ", time.time() - train_epoch_start)
 
-            if (epoch + 1) % S.VALIDATION_INTERVAL == 0:
+            if self.epoch % S.VALIDATION_INTERVAL == 0:
                 validate_acc = self._validate_epoch()
 
                 self.scheduler.step(validate_acc)
@@ -128,11 +131,12 @@ class Agent1:
         epoch_loss = AverageMeter()
         epoch_acc = AverageMeter()
 
-        tqdm_batch = tqdm(self.train_loader, f"Epoch-{self.current_epoch}-")
-        for data in tqdm_batch:
+        print("")
+        sp = StaticPrinter()
+        for step, inputs in enumerate(self.train_loader):
             # Prepare data
-            x_img = data["img"].to(self.device, torch.float)  # (batch, 3, H, W)
-            y_gt = data["label"].to(self.device, torch.int64)  # (batch)
+            x_img = inputs["img"].to(self.device, torch.float)  # (batch, 3, H, W)
+            y_gt = inputs["label"].to(self.device, torch.int64)  # (batch)
             batch_size = x_img.shape[0]
 
             # Forward pass
@@ -158,10 +162,15 @@ class Agent1:
             epoch_loss.update(cur_loss.item(), batch_size)
             epoch_acc.update(cur_acc, batch_size)
 
-        tqdm_batch.close()
+            # Print
+            sp.reset()
+            sp.print(
+                f"Epoch {self.epoch}| Training {step+1}/{len(self.train_loader)} | "
+                f"loss: {epoch_loss.val:.4f} - acc: {epoch_acc.val:.4f}"
+            )
 
         logging.info(
-            f"Train at epoch- {self.current_epoch} |"
+            f"Train at epoch- {self.epoch} |"
             f"loss: {epoch_loss.val:.4f} - acc: {epoch_acc.val:.4f}"
         )
 
@@ -175,11 +184,12 @@ class Agent1:
         # Init Average Meters
         epoch_acc = AverageMeter()
 
-        tqdm_batch = tqdm(self.valid_loader, f"Epoch-{self.current_epoch}-")
-        for data in tqdm_batch:
+        print("")
+        sp = StaticPrinter()
+        for step, inputs in enumerate(self.valid_loader):
             # Prepare data
-            x_img = data["img"].to(self.device, torch.float)  # (batch, 3, H, W)
-            y_gt = data["label"].to(self.device, torch.int64)  # (batch, 1)
+            x_img = inputs["img"].to(self.device, torch.float)  # (batch, 3, H, W)
+            y_gt = inputs["label"].to(self.device, torch.int64)  # (batch, 1)
             batch_size = x_img.shape[0]
 
             # Forward pass
@@ -194,9 +204,15 @@ class Agent1:
             cur_acc = (y_pred_t == y_gt_t).sum().item() / batch_size
             """
             epoch_acc.update(cur_acc, batch_size)
-        tqdm_batch.close()
 
-        logging.info(f"Validate at epoch- {self.current_epoch} | acc: {epoch_acc.val:.4f}")
+            # Print
+            sp.reset()
+            sp.print(
+                f"Epoch {self.epoch}| Validation {step+1}/{len(self.valid_loader)} | "
+                f"loss: {epoch_acc.val:.4f}"
+            )
+
+        logging.info(f"Validate at epoch- {self.epoch} | acc: {epoch_acc.val:.4f}")
 
         return epoch_acc.val
 

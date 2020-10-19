@@ -5,7 +5,6 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from agents.agent1 import Agent1
 from config import merge_config_from_toml
@@ -31,15 +30,12 @@ def main():
     agent.load_checkpoint()
 
     # start prediction
-    tqdm_batch = tqdm(test_loader, "Test")
-    for _, data in enumerate(tqdm_batch):
+    for _, data in enumerate(test_loader):
         # Prepare data
         x_img = data["img"]
 
         # Predict
         y_pred = agent.predict(x_img)
-
-    tqdm_batch.close()
 
 
 if __name__ == "__main__":

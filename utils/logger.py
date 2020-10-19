@@ -11,7 +11,7 @@ ROOT_DIR = os.path.abspath(ROOT_DIR)
 # --------------------
 def init_logger(no_file_logging=False):
 
-    begin_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    begin_time = datetime.now().strftime("%y%m%d_%H%M%S")
     format = "%(asctime)s: %(message)s"
     level = logging.INFO
     if no_file_logging:
