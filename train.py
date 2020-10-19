@@ -22,22 +22,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("CONFIG_NAME", type=str)
-    parser.add_argument("LR", type=float)
+    parser.add_argument("--LR", type=float, default=None)
     parser.add_argument("--NO_LOG", action="store_true")
 
     args = parser.parse_args()
-
-    # --------------------
-    # Setting Root Logger
-    # --------------------
-    begin_time = init_logger(no_file_logging=args.NO_LOG)
 
     # --------------------------
     # Load and update settings
     # --------------------------
     merge_config_from_toml(f"./config/{args.CONFIG_NAME}.toml")
-    S.LR = args.LR
-    S.CHECKPOINT_DIR = os.path.join(ROOT_DIR, f"Output/{begin_time}")
+    if args.LR is not None:
+        S.LR = args.LR
+
+    # --------------------
+    # Setting Root Logger
+    # --------------------
+    log_root = os.path.join(ROOT_DIR, f"Logs/{S.NET}")
+    S.CHECKPOINT_DIR = init_logger(log_root, no_file_logging=args.NO_LOG)
 
     logging.info(S)  # summarize settings
 

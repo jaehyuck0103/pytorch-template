@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from config import settings as S
 from datasets.dataset1 import Dataset1
-from nets.net1 import Net1
+from nets import get_network
 from utils.metrics import AverageMeter, EarlyStopping
 from utils.utils import StaticPrinter
 
@@ -20,10 +20,7 @@ class Agent1:
         self.device = torch.device("cuda")
 
         # Network
-        if S.NET == "NET1":
-            self.net = Net1().to(self.device)
-        else:
-            raise ValueError(f"Unexpected Network {S.NET}")
+        self.net = get_network(S.NET).to(self.device)
 
         if predict_only:
             return
@@ -94,9 +91,7 @@ class Agent1:
 
     def load_checkpoint(self):
 
-        filename = f"KFOLD_{S.KFOLD_I}.pt"
-        logging.info(f"Loading checkpoint '{filename}'")
-        checkpoint = torch.load(os.path.join(S.CHECKPOINT_DIR, filename))
+        checkpoint = torch.load(S.CHECKPOINT_PATH)
 
         self.epoch = checkpoint["epoch"]
         self.net.load_state_dict(checkpoint["state_dict"])

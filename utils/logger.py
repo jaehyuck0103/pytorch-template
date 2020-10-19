@@ -9,18 +9,18 @@ ROOT_DIR = os.path.abspath(ROOT_DIR)
 # --------------------
 # Setting Root Logger
 # --------------------
-def init_logger(no_file_logging=False):
+def init_logger(log_root="", no_file_logging=False):
 
     begin_time = datetime.now().strftime("%y%m%d_%H%M%S")
     format = "%(asctime)s: %(message)s"
     level = logging.INFO
+    log_dir = os.path.join(log_root, begin_time)
     if no_file_logging:
         handlers = [logging.StreamHandler()]
     else:
-        log_dir = os.path.join(ROOT_DIR, f"Output/{begin_time}")
         log_path = os.path.join(log_dir, f"{begin_time}.log")
         os.makedirs(log_dir, exist_ok=True)
         handlers = [logging.StreamHandler(), logging.FileHandler(log_path, mode="w")]
     logging.basicConfig(format=format, level=level, handlers=handlers)
 
-    return begin_time
+    return log_dir
