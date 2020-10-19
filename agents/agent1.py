@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from config import settings as S
 from datasets.dataset1 import Dataset1
-from nets import get_network
+from modules import get_network
 from utils.metrics import AverageMeter, EarlyStopping
 from utils.utils import StaticPrinter
 
