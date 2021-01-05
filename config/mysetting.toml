@@ -1,18 +1,30 @@
-NET = "Net1"
+[net]
+name = "net1"
 
-DATASET = "DATASET1"
-KFOLD_N = 5
-KFOLD_I = 0
+[dataset]
+name = "dataset1"
+kfold_N = 5
+kfold_I = 0
 
-NUM_EPOCHS = 10
-TRAIN_BATCH_SIZE = 64
-VALID_BATCH_SIZE = 64
-VALIDATION_INTERVAL = 1
+[agent]
+name = "agent1"
+num_epochs = 10
 
-OPTIMIZER = "ADAM"
-LR = 0.001
-LR_DECAY_RATE = 0.5
-PATIENCE = 8
-EARLY_STOP = 16
+train_batch_size = 64
+valid_batch_size = 64
 
-DEBUG = false
+train_workers = 8
+valid_workers = 8
+
+validation_interval = 1
+
+[optim]
+name = "ADAM"
+
+lr = 0.001
+lr_decay_rate = 0.5
+lr_decay_patience = 8
+early_stop = 16
+
+[loss]
+something = 0

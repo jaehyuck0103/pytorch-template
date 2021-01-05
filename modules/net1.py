@@ -27,11 +27,21 @@ class Net1(nn.Module):
         self.fc = nn.Linear(2048, 10)
         """
 
-    def forward(self, x):
-        batch_size, C, H, W = x.shape
+    def snapshot_elements(self):
+        return {
+            "cnn_classifier": self,
+        }
+
+    def forward(self, inputs):
+        x = inputs["img"]  # (B, C, H, W)
+
+        # Normalize
+        x = (x - 0.5) / 0.25
+
+        # Forward Pass
         x = self.conv_net(x)
         x = torch.squeeze(x, 3)
         x = torch.squeeze(x, 2)
-        x = self.fc(x)  # (batch, 1)
+        x = self.fc(x)  # (B, 1)
 
         return x

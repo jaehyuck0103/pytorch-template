@@ -28,16 +28,13 @@ def main():
     )
 
     agent = Agent1(predict_only=True)
-    agent.load_checkpoint()
+    agent.load_snapshot(S.load_weights_dir)
 
     # start prediction
     sp = StaticPrinter()
-    for step, data in enumerate(test_loader):
-        # Prepare data
-        x_img = data["img"]
-
+    for step, inputs in enumerate(test_loader):
         # Predict
-        y_pred = agent.predict(x_img)
+        y_pred = agent.predict(inputs)
 
         # Print
         sp.reset()
@@ -50,8 +47,8 @@ if __name__ == "__main__":
     # ------------
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("CONFIG_NAME", type=str)
-    parser.add_argument("CHECKPOINT_PATH", type=str)
+    parser.add_argument("config_name", type=str)
+    parser.add_argument("load_weights_dir", type=str)
 
     args = parser.parse_args()
 
@@ -63,8 +60,8 @@ if __name__ == "__main__":
     # --------------------------
     # Load and update settings
     # --------------------------
-    merge_config_from_toml(f"./config/{args.CONFIG_NAME}.toml")
-    S.CHECKPOINT_PATH = args.CHECKPOINT_PATH
+    merge_config_from_toml(f"./config/{args.config_name}.toml")
+    S.load_weights_dir = args.load_weights_dir
 
     logging.info(S)  # summarize settings
 

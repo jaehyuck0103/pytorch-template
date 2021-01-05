@@ -2,11 +2,11 @@ import os
 
 import cv2
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import Dataset
 
-import pandas as pd
 from config import settings as S
-from sklearn.model_selection import StratifiedKFold
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), "../")
 ROOT_DIR = os.path.abspath(ROOT_DIR)
@@ -35,8 +35,8 @@ class Dataset1(Dataset):
         )
 
         num_imgs = df.shape[0]
-        kf = StratifiedKFold(n_splits=S.KFOLD_N, shuffle=True, random_state=910103)
-        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df["label"]))[S.KFOLD_I]
+        kf = StratifiedKFold(n_splits=S.dataset.kfold_N, shuffle=True, random_state=910103)
+        train_idx, valid_idx = list(kf.split(np.zeros(num_imgs), df["label"]))[S.dataset.kfold_I]
 
         self.df = df
         if mode == "train":
@@ -68,11 +68,6 @@ class Dataset1(Dataset):
         # Add depth channels
         img = np.transpose(img, (2, 0, 1))
         # img = np.stack([img, img, img], axis=0)  # gray -> 3channel
-
-        # Normalize
-        img[0] = (img[0] - 0.485) / 0.229
-        img[1] = (img[1] - 0.456) / 0.224
-        img[2] = (img[2] - 0.406) / 0.225
 
         # sample return
         # label = np.expand_dims(label, axis=0)
