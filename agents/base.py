@@ -1,15 +1,24 @@
+import json
 import logging
 import os
 import time
 
+import cv2
 import numpy as np
 import torch
+import torch.backends.cudnn as cudnn
+from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 
 from config import settings as S
 from datasets import get_dataset
 from modules import get_network
 from utils.metrics import EarlyStopping
+
+cv2.setNumThreads(0)
+cv2.ocl.setUseOpenCL(False)
+np.set_printoptions(linewidth=100)
+cudnn.benchmark = True
 
 
 class BaseAgent:
@@ -20,11 +29,15 @@ class BaseAgent:
         # Network
         self.net = get_network(S.net.name).to(self.device)
 
+        num_params = sum([p.data.numel() for p in self.net.parameters()])
+        print(f"\nNumber of model parameters: {num_params}")
+
         if predict_only:
             return
 
         # Dataset Setting
         train_dataset, valid_dataset = get_dataset(S.dataset.name)
+        print(f"{len(train_dataset)} training items and {len(valid_dataset)} validation items\n")
 
         self.train_loader = DataLoader(
             dataset=train_dataset,
@@ -68,10 +81,17 @@ class BaseAgent:
         # ETC
         self.epoch = 0
 
+        self.save_opts()
+        self.tb_writers = {
+            "train": SummaryWriter(os.path.join(S.agent.log_dir, "train")),
+            "val": SummaryWriter(os.path.join(S.agent.log_dir, "val")),
+        }
+
     def train(self):
         start_epoch = self.epoch + 1
         for self.epoch in range(start_epoch, S.agent.num_epochs + 1):
             # train step
+            print("\n-------------------------------------------------------------------------")
             print(f"\nEpoch {self.epoch} - LR {self.optimizer.param_groups[0]['lr']}")
             epoch_start = time.time()
             self._train_epoch()
@@ -100,6 +120,12 @@ class BaseAgent:
     def _validate_epoch(self):
         raise NotImplementedError
 
+    def save_opts(self):
+        os.makedirs(S.agent.log_dir, exist_ok=True)
+
+        with open(os.path.join(S.agent.log_dir, "opt.json"), "w") as fp:
+            json.dump(S, fp, indent=4)
+
     def save_snapshot(self):
         save_folder = os.path.join(S.agent.log_dir, "weights", f"epoch_{self.epoch}")
         os.makedirs(save_folder, exist_ok=True)
@@ -107,7 +133,7 @@ class BaseAgent:
         for name, elem in self.net.snapshot_elements().items():
             save_path = os.path.join(save_folder, f"{name}.pt")
             torch.save(elem.state_dict(), save_path)
-            print(f"Save at {save_path}")
+            print(f"Save snapshot at {save_path}")
 
         to_save = {
             "epoch": self.epoch,
@@ -124,7 +150,7 @@ class BaseAgent:
             path = os.path.join(weights_dir, f"{name}.pt")
             state_dict = torch.load(path)
             elem.load_state_dict(state_dict)
-            logging.info(f"Load from {path}")
+            logging.info(f"Load snapshot from {path}")
 
         """
         path = os.path.join(weights_dir, "info.pt")
@@ -136,5 +162,5 @@ class BaseAgent:
             print(f"Start from {self.epoch}")
             assert self.opt.width == info_dict["width"] and self.opt.height == info_dict["height"]
         else:
-            print("Cannot find info.pth")
+            print("Cannot find info.pt")
         """

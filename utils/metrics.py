@@ -1,8 +1,9 @@
-class AverageMeter:
-    """
-    Class to be an average meter for any average metric like loss, accuracy, etc..
-    """
+from typing import Dict, List
 
+import numpy as np
+
+
+class AverageMeter:
     def __init__(self):
         self.avg = 0
         self.sum = 0
@@ -25,10 +26,6 @@ class AverageMeter:
 
 
 class AverageMeterList:
-    """
-    Class to be an average meter for any average metric List structure like mean_iou_per_class
-    """
-
     def __init__(self, num_cls):
         self.num_cls = num_cls
         self.value = [0] * self.num_cls
@@ -53,6 +50,38 @@ class AverageMeterList:
     @property
     def val(self):
         return self.avg
+
+
+class AverageMeterVec:
+    def __init__(self, size):
+        self.size = size
+        self.avg = np.zeros(size)
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+    @property
+    def val(self):
+        return self.avg
+
+
+class AverageMeterDic:
+    def __init__(self, keys: List[str]):
+        self.sum = {key: 0.0 for key in keys}
+        self.count = 0
+
+    def update(self, val: Dict[str, float], n: int):
+        for key in self.sum.keys():
+            self.sum[key] += val[key] * n
+        self.count += n
+
+    @property
+    def val(self):
+        return {k: v / self.count for k, v in self.sum.items()}
 
 
 class EarlyStopping:
@@ -83,5 +112,4 @@ class EarlyStopping:
 
         if self.verbose:
             print(f"EarlyStopping {self.step_i}/{self.patience}")
-
         return self.step_i > self.patience

@@ -58,7 +58,7 @@ class Agent1(BaseAgent):
             )
 
         logging.info(
-            f"Train at epoch- {self.epoch} |"
+            f"Train at epoch {self.epoch} |"
             f"loss: {epoch_loss.val:.4f} - acc: {epoch_acc.val:.4f}"
         )
 
@@ -98,10 +98,10 @@ class Agent1(BaseAgent):
             sp.reset()
             sp.print(
                 f"Epoch {self.epoch}| Validation {step+1}/{len(self.valid_loader)} | "
-                f"loss: {epoch_acc.val:.4f}"
+                f"acc: {epoch_acc.val:.4f}"
             )
 
-        logging.info(f"Validate at epoch- {self.epoch} | acc: {epoch_acc.val:.4f}")
+        logging.info(f"Validate at epoch {self.epoch} | acc: {epoch_acc.val:.4f}")
 
         return epoch_acc.val
 
